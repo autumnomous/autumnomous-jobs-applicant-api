@@ -3,6 +3,7 @@ package accountmanagement
 import (
 	"database/sql"
 	"errors"
+	"jobs-applicant-api/shared/services/security/encryption"
 	"log"
 
 	_ "github.com/lib/pq"
@@ -13,10 +14,16 @@ type ApplicantRepository struct {
 }
 
 type Applicant struct {
-	FirstName   string `json:"firstname"`
-	LastName    string `json:"lastname"`
-	Email       string `json:"email"`
-	PhoneNumber string `json:"phonenumber"`
+	FirstName   string  `json:"firstname"`
+	LastName    string  `json:"lastname"`
+	Email       string  `json:"email"`
+	PhoneNumber string  `json:"phonenumber"`
+	Address     string  `json:"address"`
+	City        string  `json:"city"`
+	State       string  `json:"state"`
+	Zipcode     string  `json:"zipcode"`
+	Latitude    float64 `json:"latitude"`
+	Longitude   float64 `json:"longitude"`
 	// MobileNumber     string `json:"mobilenumber"`
 	// Role             string `json:"role"`
 	// Facebook         string `json:"facebook"`
@@ -39,21 +46,15 @@ const (
 	// PersonalInformation Registration Step 2
 	PersonalInformation
 
-	// CompanyDetails Registration Step 3
-	CompanyDetails
+	// Job Preferences Registration Step 3
+	JobPreferences
 
-	// PaymentMethod Registration Step 4
-	PaymentMethod
-
-	// PaymentDetails Registration Step 5
-	PaymentDetails
-
-	// Complete Registration Step 6
+	// Complete Registration Step 4
 	RegistrationComplete
 )
 
 func (rs RegistrationStep) String() string {
-	return [...]string{"change-password", "personal-information", "company-details", "payment-method", "payment-details", "registration-complete"}[rs]
+	return [...]string{"change-password", "personal-information", "job-preferences", "registration-complete"}[rs]
 }
 
 func NewApplicantRepository(db *sql.DB) *ApplicantRepository {
@@ -93,7 +94,7 @@ func (repository *ApplicantRepository) GetApplicant(userID string) (*Applicant, 
 	var applicant Applicant
 
 	stmt, err := repository.Database.Prepare(`
-		SELECT firstname, lastname, email, registrationstep, phonenumber
+		SELECT firstname, lastname, email, registrationstep, phonenumber, address, city, state, zipcode
 		FROM applicants
 		WHERE publicid=$1;`,
 	)
@@ -103,9 +104,9 @@ func (repository *ApplicantRepository) GetApplicant(userID string) (*Applicant, 
 		return nil, err
 	}
 
-	var app_phone_number sql.NullString
+	var app_phone_number, registrationstep, address, city, state, zipcode sql.NullString
 
-	err = stmt.QueryRow(userID).Scan(&applicant.FirstName, &applicant.LastName, &applicant.Email, &applicant.RegistrationStep, &app_phone_number)
+	err = stmt.QueryRow(userID).Scan(&applicant.FirstName, &applicant.LastName, &applicant.Email, &registrationstep, &app_phone_number, &address, &city, &state, &zipcode)
 
 	if err != nil {
 		log.Println(err)
@@ -116,6 +117,25 @@ func (repository *ApplicantRepository) GetApplicant(userID string) (*Applicant, 
 		applicant.PhoneNumber = app_phone_number.String
 	}
 
+	if registrationstep.Valid {
+		applicant.RegistrationStep = registrationstep.String
+	}
+
+	if address.Valid {
+		applicant.Address = address.String
+	}
+
+	if city.Valid {
+		applicant.City = city.String
+	}
+
+	if state.Valid {
+		applicant.State = state.String
+	}
+
+	if zipcode.Valid {
+		applicant.Zipcode = zipcode.String
+	}
 	// if emp_facebook.Valid {
 	// 	applicant.Facebook = emp_facebook.String
 	// }
@@ -132,183 +152,251 @@ func (repository *ApplicantRepository) GetApplicant(userID string) (*Applicant, 
 	return &applicant, nil
 }
 
-// func (repository *EmployerRepository) AuthenticateEmployerPassword(email, password string) (bool, string, string, error) {
+func (repository *ApplicantRepository) AuthenticateApplicantPassword(email, password string) (bool, string, string, error) {
 
-// 	if email == "" || password == "" {
-// 		return false, "", "", nil
-// 	}
+	if email == "" || password == "" {
+		return false, "", "", nil
+	}
 
-// 	var databasePassword, publicID, registrationStep string
-// 	stmt, err := repository.Database.Prepare(`SELECT password, registrationStep, publicid FROM employers WHERE email=$1;`)
+	var databasePassword, registrationStep sql.NullString
+	var publicID string
+	stmt, err := repository.Database.Prepare(`SELECT password, registrationStep, publicid FROM applicants WHERE email=$1;`)
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return false, "", "", err
-// 	}
+	if err != nil {
+		log.Println(err)
+		return false, "", "", err
+	}
 
-// 	err = stmt.QueryRow(email).Scan(&databasePassword, &registrationStep, &publicID)
+	err = stmt.QueryRow(email).Scan(&databasePassword, &registrationStep, &publicID)
 
-// 	if err != nil {
+	if err != nil {
 
-// 		if err.Error() == "sql: no rows in result set" {
-// 			return false, "", "", nil
-// 		} else {
-// 			log.Println(err)
-// 			return false, "", "", err
-// 		}
+		if err.Error() == "sql: no rows in result set" {
+			return false, "", "", nil
+		} else {
+			log.Println(err)
+			return false, "", "", err
+		}
 
-// 	}
+	}
 
-// 	if encryption.CompareHashes([]byte(databasePassword), []byte(password)) {
-// 		return true, registrationStep, publicID, nil
-// 	}
+	if databasePassword.Valid {
+		if encryption.CompareHashes([]byte(databasePassword.String), []byte(password)) {
+			return true, registrationStep.String, publicID, nil
+		}
+	}
 
-// 	return false, "", "", nil
-// }
+	return false, "", "", nil
+}
 
-// func (repository *EmployerRepository) UpdateEmployerPassword(publicID, password, newPassword string) (bool, error) {
+func (repository *ApplicantRepository) UpdateApplicantPassword(publicID, password, newPassword string) (bool, error) {
 
-// 	if publicID == "" || password == "" || newPassword == "" {
-// 		return false, nil
-// 	}
-// 	var databasePassword, registrationStep string
+	if publicID == "" || password == "" || newPassword == "" {
+		return false, nil
+	}
+	var databasePassword, registrationStep sql.NullString
 
-// 	stmt, err := repository.Database.Prepare(`SELECT password, registrationstep FROM employers WHERE publicid=$1;`)
+	stmt, err := repository.Database.Prepare(`SELECT password, registrationstep FROM applicants WHERE publicid=$1;`)
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return false, err
-// 	}
+	if err != nil {
+		log.Println(err)
+		return false, err
+	}
 
-// 	err = stmt.QueryRow(publicID).Scan(&databasePassword, &registrationStep)
+	err = stmt.QueryRow(publicID).Scan(&databasePassword, &registrationStep)
 
-// 	if err != nil {
+	if err != nil {
 
-// 		if err.Error() == "sql: no rows in result set" {
-// 			return false, nil
-// 		} else {
-// 			log.Println(err)
-// 			return false, err
-// 		}
+		if err.Error() == "sql: no rows in result set" {
+			return false, nil
+		} else {
+			log.Println(err)
+			return false, err
+		}
 
-// 	}
+	}
 
-// 	if encryption.CompareHashes([]byte(databasePassword), []byte(password)) {
+	if databasePassword.Valid {
+		if encryption.CompareHashes([]byte(databasePassword.String), []byte(password)) {
 
-// 		if registrationStep == ChangePassword.String() {
-// 			stmt, err = repository.Database.Prepare(`UPDATE employers SET registrationstep='personal-information' WHERE publicid=$1;`)
+			if registrationStep.Valid {
+				if registrationStep.String == ChangePassword.String() {
+					stmt, err = repository.Database.Prepare(`UPDATE applicants SET registrationstep='personal-information' WHERE publicid=$1;`)
 
-// 			if err != nil {
-// 				log.Println(err)
-// 				return false, err
-// 			}
+					if err != nil {
+						log.Println(err)
+						return false, err
+					}
 
-// 			_, err = stmt.Exec(publicID)
+					_, err = stmt.Exec(publicID)
 
-// 			if err != nil {
-// 				log.Println(err)
-// 				return false, err
-// 			}
+					if err != nil {
+						log.Println(err)
+						return false, err
+					}
 
-// 		}
-// 		stmt, err = repository.Database.Prepare(`UPDATE employers SET password=$1 WHERE publicid=$2;`)
+				}
+			}
 
-// 		if err != nil {
-// 			log.Println(err)
-// 			return false, err
-// 		}
+			stmt, err = repository.Database.Prepare(`UPDATE applicants SET password=$1 WHERE publicid=$2;`)
 
-// 		hashedNewPassword, err := encryption.HashPassword([]byte(newPassword))
+			if err != nil {
+				log.Println(err)
+				return false, err
+			}
 
-// 		if err != nil {
-// 			log.Println(err)
-// 			return false, err
-// 		}
+			hashedNewPassword, err := encryption.HashPassword([]byte(newPassword))
 
-// 		_, err = stmt.Exec(hashedNewPassword, publicID)
+			if err != nil {
+				log.Println(err)
+				return false, err
+			}
 
-// 		if err != nil {
-// 			log.Println(err)
-// 			return false, err
-// 		}
+			_, err = stmt.Exec(hashedNewPassword, publicID)
 
-// 		return true, nil
-// 	} else {
-// 		return false, nil
-// 	}
-// }
+			if err != nil {
+				log.Println(err)
+				return false, err
+			}
 
-// func (repository *EmployerRepository) UpdateEmployerAccount(publicID, firstName, lastName, email, phoneNumber, mobileNumber, role, facebook, twitter, instagram string) (*Employer, error) {
+			return true, nil
+		} else {
+			return false, nil
+		}
+	} else {
+		return false, nil
+	}
+}
 
-// 	Employer := &Employer{}
+func (repository *ApplicantRepository) UpdateApplicantAccount(publicID, firstName, lastName, email, phoneNumber, address, city, state, zipcode string, latitude, longitude float64) (*Applicant, error) {
 
-// 	stmt, err := repository.Database.Prepare(`SELECT firstname, lastname, email FROM employers WHERE publicid=$1;`)
+	applicant := &Applicant{}
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return nil, err
-// 	}
+	stmt, err := repository.Database.Prepare(`SELECT firstname, lastname, email FROM applicants WHERE publicid=$1;`)
 
-// 	err = stmt.QueryRow(publicID).Scan(&Employer.FirstName, &Employer.LastName, &Employer.Email)
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return nil, err
-// 	}
+	err = stmt.QueryRow(publicID).Scan(&applicant.FirstName, &applicant.LastName, &applicant.Email)
 
-// 	if firstName != "" {
-// 		Employer.FirstName = firstName
-// 	}
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-// 	if lastName != "" {
-// 		Employer.LastName = lastName
-// 	}
+	if firstName != "" {
+		applicant.FirstName = firstName
+	}
 
-// 	if email != "" {
-// 		Employer.Email = email
-// 	}
+	if lastName != "" {
+		applicant.LastName = lastName
+	}
 
-// 	if phoneNumber != "" {
-// 		Employer.PhoneNumber = phoneNumber
-// 	}
+	if email != "" {
+		applicant.Email = email
+	}
 
-// 	if mobileNumber != "" {
-// 		Employer.MobileNumber = mobileNumber
-// 	}
+	if phoneNumber != "" {
+		applicant.PhoneNumber = phoneNumber
+	}
 
-// 	if role != "" {
-// 		Employer.Role = role
-// 	}
+	if address != "" {
+		applicant.Address = address
+	}
 
-// 	Employer.Facebook = facebook
-// 	Employer.Twitter = twitter
-// 	Employer.Instagram = instagram
-// 	Employer.PublicID = publicID
-// 	stmt, err = repository.Database.Prepare(`UPDATE employers SET firstname=$1, lastname=$2, email=$3, phonenumber=$4, mobilenumber=$5, role=$6, facebook=$7, twitter=$8, instagram=$9 WHERE publicid=$10;`)
+	if city != "" {
+		applicant.City = city
+	}
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return nil, err
-// 	}
+	if state != "" {
+		applicant.State = state
+	}
 
-// 	_, err = stmt.Exec(Employer.FirstName, Employer.LastName, Employer.Email, Employer.PhoneNumber, Employer.MobileNumber, Employer.Role, facebook, twitter, instagram, Employer.PublicID)
+	if zipcode != "" {
+		applicant.Zipcode = zipcode
+	}
 
-// 	if err != nil {
-// 		log.Println(err)
-// 		return nil, err
-// 	}
+	if latitude != 0 {
+		applicant.Latitude = latitude
+	}
 
-// 	emp, _ := repository.GetEmployer(publicID)
+	if longitude != 0 {
+		applicant.Longitude = longitude
+	}
 
-// 	if emp.RegistrationStep == PersonalInformation.String() {
-// 		stmt, _ = repository.Database.Prepare(`UPDATE employers SET registrationstep='company-details' WHERE publicid=$1;`)
+	// if mobileNumber != "" {
+	// 	applicant.MobileNumber = mobileNumber
+	// }
 
-// 		stmt.Exec(publicID)
+	// applicant.Facebook = facebook
+	// applicant.Twitter = twitter
+	// applicant.Instagram = instagram
+	applicant.PublicID = publicID
+	stmt, err = repository.Database.Prepare(`UPDATE applicants SET firstname=$1, lastname=$2, email=$3, phonenumber=$4, address=$5, city=$6, state=$7, zipcode=$8, latitude=$9, longitude=$10 WHERE publicid=$11;`)
 
-// 	}
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
 
-// 	return Employer, nil
-// }
+	_, err = stmt.Exec(applicant.FirstName, applicant.LastName, applicant.Email, applicant.PhoneNumber, applicant.Address, applicant.City, applicant.State, applicant.Zipcode, applicant.Latitude, applicant.Longitude, applicant.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	applicant, _ = repository.GetApplicant(publicID)
+
+	if applicant.RegistrationStep == PersonalInformation.String() {
+		stmt, _ = repository.Database.Prepare(`UPDATE applicants SET registrationstep='job-preferences' WHERE publicid=$1;`)
+
+		stmt.Exec(publicID)
+
+	}
+
+	return applicant, nil
+}
+
+func (repository *ApplicantRepository) UpdateApplicantJobPreferences(publicID string, desiredCities []map[string]interface{}) error {
+
+	for _, city := range desiredCities {
+
+		stmt, err := repository.Database.Prepare(`
+			INSERT INTO
+			desiredcities(city, state, country, latitude, longitude, text, applicantid)
+			VALUES ($1, $2, $3, $4, $5, $6, (SELECT id FROM applicants WHERE publicid=$7));
+		`)
+
+		if err != nil {
+			log.Println(err)
+			return err
+		}
+
+		err = stmt.QueryRow(city["city"], city["state"], city["country"], city["latitude"], city["longitude"], city["text"], publicID).Scan()
+
+		if err != nil {
+			if err.Error() != "sql: no rows in result set" {
+				log.Println(err)
+				return err
+			}
+		}
+
+	}
+
+	applicant, _ := repository.GetApplicant(publicID)
+
+	if applicant.RegistrationStep == JobPreferences.String() {
+		stmt, _ := repository.Database.Prepare(`UPDATE applicants SET registrationstep='registration-complete' WHERE publicid=$1;`)
+
+		stmt.Exec(publicID)
+
+	}
+
+	return nil
+}
 
 // func (repository *EmployerRepository) UpdateEmployerCompany(employerPublicID, companyName, location, url, facebook, twitter, instagram, description, logo, extradetails string, longitude, latitude float64) (*companies.Company, error) {
 
