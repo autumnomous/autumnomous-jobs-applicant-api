@@ -31,15 +31,19 @@ func routes() *httprouter.Router {
 	r.POST("/upload/image", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(utilities.UploadImage)))
 
 	r.POST("/applicant/signup", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(applicants.SignUp)))
-	// r.POST("/applicant/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(employers.Login)))
+	r.POST("/applicant/login", hr.Handler(alice.New(acl.AllowAPIKey).ThenFunc(applicants.Login)))
 
-	// r.POST("/employer/update-password", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdatePassword)))
-	// r.POST("/employer/update-account", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdateAccount)))
+	r.POST("/applicant/update-password", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.UpdatePassword)))
+	r.POST("/applicant/update-account", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.UpdateAccount)))
+	r.POST("/applicant/update-job-preferences", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.UpdateJobPreferences)))
+	r.GET("/applicant/get", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetApplicant)))
+	r.POST("/applicant/get/location/autocomplete", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetAutocompleteLocationData)))
+	r.GET("/applicant/get/jobs", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetJobs)))
+	r.POST("/applicant/get/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetJob)))
+
 	// r.POST("/employer/update-company", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdateCompany)))
 	// r.POST("/employer/update-payment-method", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdatePaymentMethod)))
 	// r.POST("/employer/update-payment-details", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.UpdatePaymentDetails)))
-
-	// r.GET("/employer/get", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetEmployer)))
 	// r.GET("/employer/get/company", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetEmployerCompany)))
 	// r.POST("/employer/create/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.CreateJob)))
 	// r.POST("/employer/edit/job", hr.Handler(alice.New(acl.ValidateJWT, acl.ValidateJWT).ThenFunc(employers.EditJob)))
@@ -47,7 +51,6 @@ func routes() *httprouter.Router {
 	// r.POST("/employer/get/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetJob)))
 	// r.DELETE("/employer/delete/job", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.DeleteJob)))
 	// r.GET("/employer/get/jobpackages/active", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetActiveJobPackages)))
-	// r.POST("/employer/get/location/autocomplete", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.GetAutocompleteLocationData)))
 
 	// r.POST("/employer/buy/job-package", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(employers.PurchaseJobPackage)))
 

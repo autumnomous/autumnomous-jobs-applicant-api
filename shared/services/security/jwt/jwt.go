@@ -89,20 +89,23 @@ func GetUserClaim(r *http.Request) string {
 
 	auth := strings.SplitN(r.Header.Get("Authorization"), " ", 2)
 
-	authKey, err := base64.StdEncoding.DecodeString(auth[1])
+	if len(auth) >= 2 {
+		authKey, err := base64.StdEncoding.DecodeString(auth[1])
 
-	if err != nil {
-		log.Println(err)
-		return ""
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		tokenClaims, err := ParseToken(string(authKey))
+
+		if err != nil {
+			log.Println(err)
+			return ""
+		}
+
+		return tokenClaims.CustomClaims["user"]
 	}
 
-	tokenClaims, err := ParseToken(string(authKey))
-
-	if err != nil {
-		log.Println(err)
-		return ""
-	}
-
-	return tokenClaims.CustomClaims["user"]
-
+	return ""
 }

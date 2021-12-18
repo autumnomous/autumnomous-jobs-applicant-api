@@ -16,7 +16,7 @@ func ValidateJWT(h http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, req *http.Request) {
 
 		s := strings.SplitN(req.Header.Get("Authorization"), " ", 2)
-		if len(s) == 2 {
+		if len(s) >= 2 {
 
 			b, err := base64.StdEncoding.DecodeString(s[1])
 
@@ -29,7 +29,7 @@ func ValidateJWT(h http.Handler) http.Handler {
 
 					if err != nil {
 						log.Println(err)
-						response.SendJSONMessage(w, http.StatusBadRequest, "Unauthorized")
+						response.SendJSONMessage(w, http.StatusUnauthorized, "Unauthorized")
 					}
 
 					if data == nil {
