@@ -37,6 +37,9 @@ type Job struct {
 	Category        string `json:"category"`
 	Description     string `json:"description"`
 	VisibleDate     string `json:"visibledate"`
+	MinSalary       int64  `json:"minsalary"`
+	MaxSalary       int64  `json:"maxsalary"`
+	PayPeriod       string `json:"payperiod"`
 	Remote          bool   `json:"remote"`
 	IsCustomized    bool   `json:"iscustomized"`
 	CreateDate      string `json:"createdate"`
@@ -59,14 +62,14 @@ func (repository *JobRepository) GetJobs() ([]*Job, error) {
 
 	stmt, err := repository.Database.Prepare(`
 		SELECT 
-			jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.visibledate, jobs.remote, jobs.publicid,
+			jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.visibledate, jobs.remote, jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.publicid,
 			employers.companyid, companies.url, companies.name, companies.logo, companies.location
 		FROM 
 			jobs 
 		JOIN employers ON employers.id=jobs.employerid
 		JOIN companies ON companies.id=employers.companyid
 		WHERE 
-			now() >= visibledate AND now() <= (visibledate + '30 days'::interval);`)
+			now() >= jobs.visibledate AND now() <= (jobs.visibledate + '30 days'::interval);`)
 
 	if err != nil {
 		log.Println(err)
@@ -84,8 +87,9 @@ func (repository *JobRepository) GetJobs() ([]*Job, error) {
 	for rows.Next() {
 		job := &Job{}
 
-		var visibleDate sql.NullString
-		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &job.PublicID, &job.EmployerID, &job.CompanyURL, &job.CompanyName, &job.CompanyLogo, &job.CompanyLocation)
+		var visibleDate, payPeriod sql.NullString
+		var minSalary, maxSalary sql.NullInt64
+		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &minSalary, &maxSalary, &payPeriod, &job.PublicID, &job.EmployerID, &job.CompanyURL, &job.CompanyName, &job.CompanyLogo, &job.CompanyLocation)
 
 		if err != nil {
 			log.Println(err)
@@ -94,6 +98,18 @@ func (repository *JobRepository) GetJobs() ([]*Job, error) {
 
 		if visibleDate.Valid {
 			job.VisibleDate = visibleDate.String
+		}
+
+		if payPeriod.Valid {
+			job.PayPeriod = payPeriod.String
+		}
+
+		if minSalary.Valid {
+			job.MinSalary = minSalary.Int64
+		}
+
+		if maxSalary.Valid {
+			job.MaxSalary = maxSalary.Int64
 		}
 
 		jobs = append(jobs, job)
@@ -108,7 +124,7 @@ func (repository *JobRepository) GetJob(publicid string) (*Job, error) {
 
 	stmt, err := repository.Database.Prepare(`
 		SELECT 
-			jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.visibledate, jobs.remote, jobs.publicid,
+			jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.visibledate, jobs.remote, jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.publicid,
 			employers.companyid, companies.url, companies.name, companies.logo, companies.location
 		FROM 
 			jobs 
@@ -122,9 +138,10 @@ func (repository *JobRepository) GetJob(publicid string) (*Job, error) {
 		return nil, err
 	}
 
-	var visibleDate sql.NullString
+	var visibleDate, payPeriod sql.NullString
+	var minSalary, maxSalary sql.NullInt64
 
-	err = stmt.QueryRow(publicid).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &job.PublicID, &job.EmployerID, &job.CompanyURL, &job.CompanyName, &job.CompanyLogo, &job.CompanyLocation)
+	err = stmt.QueryRow(publicid).Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &minSalary, &maxSalary, &payPeriod, &job.PublicID, &job.EmployerID, &job.CompanyURL, &job.CompanyName, &job.CompanyLogo, &job.CompanyLocation)
 
 	if err != nil {
 		log.Println(err)
@@ -133,6 +150,18 @@ func (repository *JobRepository) GetJob(publicid string) (*Job, error) {
 
 	if visibleDate.Valid {
 		job.VisibleDate = visibleDate.String
+	}
+
+	if payPeriod.Valid {
+		job.PayPeriod = payPeriod.String
+	}
+
+	if minSalary.Valid {
+		job.MinSalary = minSalary.Int64
+	}
+
+	if maxSalary.Valid {
+		job.MaxSalary = maxSalary.Int64
 	}
 
 	return &job, nil
