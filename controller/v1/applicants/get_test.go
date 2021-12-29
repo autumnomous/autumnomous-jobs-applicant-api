@@ -207,7 +207,87 @@ func Test_Applicant_GetJobs_Correct(t *testing.T) {
 
 	token = base64.StdEncoding.EncodeToString([]byte(token))
 
-	request, err := http.NewRequest("POST", ts.URL, nil)
+	request, err := http.NewRequest("GET", ts.URL, nil)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{}
+
+	response, err := httpClient.Do(request)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	var result []map[string]interface{}
+
+	decoder := json.NewDecoder(response.Body)
+
+	err = decoder.Decode(&result)
+	assert.Nil(err)
+	assert.Equal(int(http.StatusOK), response.StatusCode)
+
+}
+
+func Test_Applicant_GetJobs_IncorrectMethod(t *testing.T) {
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(applicants.GetJobs))
+
+	defer ts.Close()
+
+	methods := []string{"POST", "DELETE", "PUT"}
+
+	for _, method := range methods {
+		request, err := http.NewRequest(method, ts.URL, nil)
+
+		if err != nil {
+			t.Fatal()
+		}
+
+		httpClient := &http.Client{}
+
+		response, err := httpClient.Do(request)
+
+		assert.Nil(err)
+		assert.Equal(int(http.StatusMethodNotAllowed), response.StatusCode)
+	}
+
+}
+
+func Test_Applicant_GetJobsByRadius_Correct(t *testing.T) {
+	assert := assert.New(t)
+
+	ts := httptest.NewServer(http.HandlerFunc(applicants.GetJobsByRadius))
+
+	defer ts.Close()
+
+	applicant := testhelper.Helper_RandomApplicant(t)
+
+	token, err := jwt.GenerateToken(applicant.PublicID)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+
+	test := map[string]string{
+		"zipcode": "44145",
+		"radius":  "10",
+	}
+
+	requestBody, err := json.Marshal(test)
+
+	if err != nil {
+		t.Fatal()
+	}
+
+	request, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(requestBody))
 
 	if err != nil {
 		t.Fatal()
@@ -239,9 +319,9 @@ func Test_Applicant_GetJobs_Correct(t *testing.T) {
 
 }
 
-func Test_Applicant_GetJobs_IncorrectMethod(t *testing.T) {
+func Test_Applicant_GetJobsByRadius_IncorrectMethod(t *testing.T) {
 	assert := assert.New(t)
-	ts := httptest.NewServer(http.HandlerFunc(applicants.GetJobs))
+	ts := httptest.NewServer(http.HandlerFunc(applicants.GetJobsByRadius))
 
 	defer ts.Close()
 

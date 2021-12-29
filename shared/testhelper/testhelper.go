@@ -71,6 +71,7 @@ type TestCompany struct {
 	ExtraDetails string `json:"extradetails"`
 	PublicID     string `json:"publicid"`
 	ID           string `json:"id"`
+	Zipcode      string `json:"zipcode"`
 }
 
 type TestEmployer struct {
@@ -234,15 +235,15 @@ func Helper_RandomEmployer(t *testing.T) *TestEmployer {
 func Helper_CreateCompany(company *TestCompany, t *testing.T) *TestCompany {
 
 	stmt, err := database.DB.Prepare(`INSERT INTO 
-			companies(domain, name, location, url, facebook, twitter, instagram, description, logo, extradetails) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) 
+			companies(domain, name, location, url, facebook, twitter, instagram, description, logo, extradetails, zipcode) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11) 
 			RETURNING publicid;`)
 	if err != nil {
 		log.Println(err)
 		return nil
 	}
 
-	err = stmt.QueryRow(company.Domain, company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails).Scan(&company.PublicID)
+	err = stmt.QueryRow(company.Domain, company.Name, company.Location, company.URL, company.Facebook, company.Twitter, company.Instagram, company.Description, company.Logo, company.ExtraDetails, company.Zipcode).Scan(&company.PublicID)
 
 	if err != nil {
 		log.Println(err)
@@ -262,6 +263,7 @@ func Helper_RandomCompany(t *testing.T) *TestCompany {
 		Facebook:  string(encryption.GeneratePassword(5)),
 		Twitter:   string(encryption.GeneratePassword(5)),
 		Instagram: string(encryption.GeneratePassword(5)),
+		Zipcode:   string(encryption.GeneratePassword(5)),
 	}
 
 	return Helper_CreateCompany(company, t)

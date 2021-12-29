@@ -47,3 +47,22 @@ func Test_JobsRepository_GetJob(t *testing.T) {
 	assert.Equal(result.PublicID, job.PublicID)
 
 }
+
+func Test_JobsRepository_GetJobsByZipcode(t *testing.T) {
+
+	assert := assert.New(t)
+
+	company := testhelper.Helper_RandomCompany(t)
+	employer := testhelper.Helper_RandomEmployer(t)
+
+	testhelper.Helper_SetEmployerCompany(employer.PublicID, company.PublicID)
+	testhelper.Helper_RandomJob(employer, t)
+	testhelper.Helper_RandomJob(employer, t)
+	testhelper.Helper_RandomJob(employer, t)
+
+	repository := jobs.NewJobRegistry().GetJobRepository()
+	jobs, err := repository.GetJobsByZipcode(company.Zipcode)
+
+	assert.Nil(err)
+	assert.GreaterOrEqual(len(jobs), 3)
+}
