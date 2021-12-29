@@ -16,6 +16,11 @@ type AutocompleteLocationData struct {
 	Characters string `json:"chars"`
 }
 
+type GetJobsByRadiusData struct {
+	Zipcode string  `json:"zipcode"`
+	Radius  float64 `json:"radius"`
+}
+
 func GetApplicant(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
@@ -122,5 +127,65 @@ func GetJob(w http.ResponseWriter, r *http.Request) {
 	}
 
 	response.SendJSON(w, job)
+
+}
+
+func GetJobsByRadius(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var details GetJobsByRadiusData
+
+	decoder := json.NewDecoder(r.Body)
+	decoder.Decode(&details)
+
+	// if details["zipcode"] == ""{
+
+	// }
+
+	// if details["radius"] == 0 {
+
+	// }
+
+	gateway := zipcode.NewZipCodeGateway(os.Getenv("ZIPCODESERVICES_API_KEY"))
+	data, err := gateway.GetZipCodesInRadius(details.Zipcode, details.Radius)
+
+	if err != nil {
+		log.Println(err)
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	var result []*jobs.Job
+	repository := jobs.NewJobRegistry().GetJobRepository()
+
+	for i := 0; i < len(data); i++ {
+
+		jobsInZipcode, err := repository.GetJobsByZipcode(data[i].ZipCode)
+
+		if err != nil {
+			log.Println(err)
+			response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+			return
+		}
+
+		result = append(result, jobsInZipcode...)
+
+	}
+	// log.Println(data)
+	// repository := jobs.NewJobRegistry().GetJobRepository()
+
+	// jobs, err := repository.GetJobs()
+
+	// if err != nil {
+	// 	log.Println(err)
+	// 	response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+	// 	return
+	// }
+
+	response.SendJSON(w, result)
 
 }

@@ -166,3 +166,65 @@ func (repository *JobRepository) GetJob(publicid string) (*Job, error) {
 
 	return &job, nil
 }
+
+func (repository *JobRepository) GetJobsByZipcode(zipcode string) ([]*Job, error) {
+
+	var jobs []*Job
+
+	stmt, err := repository.Database.Prepare(`
+		SELECT 
+			jobs.title, jobs.jobtype, jobs.category, jobs.description, jobs.visibledate, jobs.remote, jobs.minsalary, jobs.maxsalary, jobs.payperiod, jobs.publicid,
+			employers.companyid, companies.url, companies.name, companies.logo, companies.location
+		FROM 
+			jobs 
+		JOIN employers ON employers.id=jobs.employerid
+		JOIN companies ON companies.id=employers.companyid
+		WHERE 
+			now() >= jobs.visibledate AND now() <= (jobs.visibledate + '30 days'::interval) AND companies.zipcode LIKE $1;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	rows, err := stmt.Query(zipcode)
+
+	if err != nil {
+		log.Println(err)
+		return nil, err
+	}
+
+	defer rows.Close()
+	for rows.Next() {
+		job := &Job{}
+
+		var visibleDate, payPeriod sql.NullString
+		var minSalary, maxSalary sql.NullInt64
+		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &minSalary, &maxSalary, &payPeriod, &job.PublicID, &job.EmployerID, &job.CompanyURL, &job.CompanyName, &job.CompanyLogo, &job.CompanyLocation)
+
+		if err != nil {
+			log.Println(err)
+			return nil, err
+		}
+
+		if visibleDate.Valid {
+			job.VisibleDate = visibleDate.String
+		}
+
+		if payPeriod.Valid {
+			job.PayPeriod = payPeriod.String
+		}
+
+		if minSalary.Valid {
+			job.MinSalary = minSalary.Int64
+		}
+
+		if maxSalary.Valid {
+			job.MaxSalary = maxSalary.Int64
+		}
+
+		jobs = append(jobs, job)
+	}
+
+	return jobs, nil
+}
