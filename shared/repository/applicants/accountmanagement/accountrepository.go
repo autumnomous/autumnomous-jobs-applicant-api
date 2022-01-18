@@ -1,9 +1,9 @@
 package accountmanagement
 
 import (
+	"autumnomous-jobs-applicant-api/shared/services/security/encryption"
 	"database/sql"
 	"errors"
-	"jobs-applicant-api/shared/services/security/encryption"
 	"log"
 
 	_ "github.com/lib/pq"

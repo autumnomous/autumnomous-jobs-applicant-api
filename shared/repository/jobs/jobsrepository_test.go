@@ -1,8 +1,8 @@
 package jobs_test
 
 import (
-	"jobs-applicant-api/shared/repository/jobs"
-	"jobs-applicant-api/shared/testhelper"
+	"autumnomous-jobs-applicant-api/shared/repository/jobs"
+	"autumnomous-jobs-applicant-api/shared/testhelper"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

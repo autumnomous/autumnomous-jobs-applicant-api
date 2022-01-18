@@ -1,8 +1,8 @@
 package applicants
 
 import (
-	"jobs-applicant-api/shared/database"
-	"jobs-applicant-api/shared/repository/applicants/accountmanagement"
+	"autumnomous-jobs-applicant-api/shared/database"
+	"autumnomous-jobs-applicant-api/shared/repository/applicants/accountmanagement"
 )
 
 type ApplicantRegistry struct {

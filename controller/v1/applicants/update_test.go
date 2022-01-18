@@ -1,14 +1,14 @@
 package applicants_test
 
 import (
+	"autumnomous-jobs-applicant-api/controller/v1/applicants"
+	"autumnomous-jobs-applicant-api/shared/services/security/encryption"
+	"autumnomous-jobs-applicant-api/shared/services/security/jwt"
+	"autumnomous-jobs-applicant-api/shared/testhelper"
 	"bytes"
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
-	"jobs-applicant-api/controller/v1/applicants"
-	"jobs-applicant-api/shared/services/security/encryption"
-	"jobs-applicant-api/shared/services/security/jwt"
-	"jobs-applicant-api/shared/testhelper"
 	"log"
 	"net/http"
 	"net/http/httptest"

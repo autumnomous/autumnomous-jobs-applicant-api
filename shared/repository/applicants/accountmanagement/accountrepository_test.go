@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"testing"
 
-	// "jobs-applicant-api/controller/v1/applicants"
-	"jobs-applicant-api/shared/database"
-	"jobs-applicant-api/shared/repository/applicants/accountmanagement"
-	"jobs-applicant-api/shared/services/security/encryption"
-	"jobs-applicant-api/shared/testhelper"
+	// "autumnomous-jobs-applicant-api/controller/v1/applicants"
+	"autumnomous-jobs-applicant-api/shared/database"
+	"autumnomous-jobs-applicant-api/shared/repository/applicants/accountmanagement"
+	"autumnomous-jobs-applicant-api/shared/services/security/encryption"
+	"autumnomous-jobs-applicant-api/shared/testhelper"
 
 	"github.com/stretchr/testify/assert"
 )

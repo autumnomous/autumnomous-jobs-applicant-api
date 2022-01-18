@@ -6,8 +6,8 @@ import (
 	"os"
 	"runtime"
 
-	"jobs-applicant-api/route"
-	"jobs-applicant-api/shared/database"
+	"autumnomous-jobs-applicant-api/route"
+	"autumnomous-jobs-applicant-api/shared/database"
 
 	"github.com/joho/godotenv"
 )

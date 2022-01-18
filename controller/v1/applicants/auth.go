@@ -10,12 +10,12 @@ import (
 	"os"
 	"time"
 
-	applicants "jobs-applicant-api/shared/repository/applicants"
+	applicants "autumnomous-jobs-applicant-api/shared/repository/applicants"
 
-	"jobs-applicant-api/shared/repository/applicants/accountmanagement"
-	"jobs-applicant-api/shared/response"
-	"jobs-applicant-api/shared/services/security/encryption"
-	"jobs-applicant-api/shared/services/security/jwt"
+	"autumnomous-jobs-applicant-api/shared/repository/applicants/accountmanagement"
+	"autumnomous-jobs-applicant-api/shared/response"
+	"autumnomous-jobs-applicant-api/shared/services/security/encryption"
+	"autumnomous-jobs-applicant-api/shared/services/security/jwt"
 
 	mailgun "github.com/mailgun/mailgun-go/v4"
 )
@@ -91,7 +91,7 @@ func SendWelcomeMessage(domain, apiKey, password string, employer *accountmanage
 	message := fmt.Sprintf("Thank you for joining BiT Jobs, %s!\nYour temporary password is %s", employer.FirstName, password)
 	mg := mailgun.NewMailgun(domain, apiKey)
 	m := mg.NewMessage(
-		"BiT Jobs Support <admin@autumnomous.git.beanstalkapp.com/jobs-applicant-api>",
+		"BiT Jobs Support <admin@autumnomous.git.beanstalkapp.com/autumnomous-jobs-applicant-api>",
 		"Welcome to BiT Jobs!",
 		message,
 		employer.Email,

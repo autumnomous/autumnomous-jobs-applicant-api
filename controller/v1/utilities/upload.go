@@ -1,7 +1,7 @@
 package utilities
 
 import (
-	"jobs-applicant-api/shared/response"
+	"autumnomous-jobs-applicant-api/shared/response"
 	"net/http"
 	"os"
 

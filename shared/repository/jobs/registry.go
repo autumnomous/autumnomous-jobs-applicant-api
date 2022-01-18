@@ -1,7 +1,7 @@
 package jobs
 
 import (
-	"jobs-applicant-api/shared/database"
+	"autumnomous-jobs-applicant-api/shared/database"
 )
 
 type JobRegistry struct {

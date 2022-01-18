@@ -3,12 +3,12 @@ package route
 import (
 	"net/http"
 
-	"jobs-applicant-api/controller/v1/applicants"
-	"jobs-applicant-api/controller/v1/utilities"
-	"jobs-applicant-api/route/middleware/acl"
-	"jobs-applicant-api/route/middleware/cors"
-	hr "jobs-applicant-api/route/middleware/httprouterwrapper"
-	"jobs-applicant-api/route/middleware/logrequest"
+	"autumnomous-jobs-applicant-api/controller/v1/applicants"
+	"autumnomous-jobs-applicant-api/controller/v1/utilities"
+	"autumnomous-jobs-applicant-api/route/middleware/acl"
+	"autumnomous-jobs-applicant-api/route/middleware/cors"
+	hr "autumnomous-jobs-applicant-api/route/middleware/httprouterwrapper"
+	"autumnomous-jobs-applicant-api/route/middleware/logrequest"
 
 	"github.com/gorilla/context"
 	"github.com/julienschmidt/httprouter"

@@ -1,11 +1,11 @@
 package applicants
 
 import (
+	applicants "autumnomous-jobs-applicant-api/shared/repository/applicants"
+	"autumnomous-jobs-applicant-api/shared/response"
+	"autumnomous-jobs-applicant-api/shared/services/security/jwt"
+	"autumnomous-jobs-applicant-api/shared/services/zipcode"
 	"encoding/json"
-	applicants "jobs-applicant-api/shared/repository/applicants"
-	"jobs-applicant-api/shared/response"
-	"jobs-applicant-api/shared/services/security/jwt"
-	"jobs-applicant-api/shared/services/zipcode"
 	"log"
 	"net/http"
 	"os"

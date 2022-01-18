@@ -1,4 +1,4 @@
-module jobs-applicant-api
+module autumnomous-jobs-applicant-api
 
 go 1.16
 
