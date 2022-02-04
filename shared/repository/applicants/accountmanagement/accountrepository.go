@@ -69,7 +69,7 @@ func (repository *ApplicantRepository) CreateApplicant(firstName, lastName, emai
 
 	applicant := &Applicant{FirstName: firstName, LastName: lastName, Email: email}
 
-	stmt, err := repository.Database.Prepare(`INSERT INTO applicants(email, firstname, lastname, password) VALUES ($1, $2, $3, $4) RETURNING publicid;`)
+	stmt, err := repository.Database.Prepare(`INSERT INTO applicants(email, firstname, lastname, password, registrationstep) VALUES ($1, $2, $3, $4, 'change-password') RETURNING publicid;`)
 
 	if err != nil {
 		log.Println(err)
