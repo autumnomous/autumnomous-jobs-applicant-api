@@ -92,8 +92,13 @@ func (repository *JobRepository) GetJobs() ([]*Job, error) {
 		err := rows.Scan(&job.Title, &job.JobType, &job.Category, &job.Description, &visibleDate, &job.Remote, &minSalary, &maxSalary, &payPeriod, &job.PublicID, &job.EmployerID, &job.CompanyURL, &job.CompanyName, &job.CompanyLogo, &job.CompanyLocation)
 
 		if err != nil {
-			log.Println(err)
-			return nil, err
+			if err.Error() == "sql: no rows in result set" {
+				return nil, nil
+			} else {
+				log.Println(err)
+				return nil, err
+			}
+
 		}
 
 		if visibleDate.Valid {
