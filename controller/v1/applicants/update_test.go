@@ -121,7 +121,7 @@ func Test_Applicant_UpdatePassword_IncorrectMethod(t *testing.T) {
 			t.Fatal(err)
 		}
 
-		assert.Equal(http.StatusMethodNotAllowed, response.StatusCode)
+		assert.Equal(int(http.StatusMethodNotAllowed), response.StatusCode)
 	}
 }
 func Test_Applicant_UpdatePassword_IncorrectDataReceived_NoPassword(t *testing.T) {

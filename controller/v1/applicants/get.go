@@ -21,6 +21,10 @@ type GetJobsByRadiusData struct {
 	Radius  float64 `json:"radius"`
 }
 
+type getBookmarkJobData struct {
+	JobID string `json:"jobid"`
+}
+
 func GetApplicant(w http.ResponseWriter, r *http.Request) {
 
 	if r.Method != http.MethodGet {
@@ -187,5 +191,42 @@ func GetJobsByRadius(w http.ResponseWriter, r *http.Request) {
 	// }
 
 	response.SendJSON(w, result)
+
+}
+
+func GetApplicantJobBookmark(w http.ResponseWriter, r *http.Request) {
+
+	if r.Method != http.MethodPost {
+		response.SendJSONMessage(w, http.StatusMethodNotAllowed, "Method not allowed")
+		return
+	}
+
+	var data getBookmarkJobData
+	decoder := json.NewDecoder(r.Body)
+	err := decoder.Decode(&data)
+
+	if err != nil {
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	if data.JobID == "" {
+		response.SendJSONMessage(w, http.StatusBadRequest, response.FriendlyError)
+		return
+	}
+
+	publicID := jwt.GetUserClaim(r)
+
+	repository := applicants.NewApplicantRegistry().GetBookmarkRepository()
+
+	bookmark, err := repository.GetApplicantJobBookmark(publicID, data.JobID)
+
+	if err != nil {
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	response.SendJSON(w, bookmark)
+	return
 
 }

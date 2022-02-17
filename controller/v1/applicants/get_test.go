@@ -343,3 +343,63 @@ func Test_Applicant_GetJobsByRadius_IncorrectMethod(t *testing.T) {
 	}
 
 }
+
+func Test_Applicant_GetApplicantJobBookmark_IncorrectMethod(t *testing.T) {
+
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(applicants.GetApplicantJobBookmark))
+
+	defer ts.Close()
+
+	for _, method := range []string{"GET", "DELETE", "PUT"} {
+
+		request, err := http.NewRequest(method, ts.URL, nil)
+
+		if err != nil {
+			t.Fatal()
+		}
+
+		httpClient := &http.Client{}
+
+		response, err := httpClient.Do(request)
+
+		assert.Nil(err)
+		assert.Equal(int(http.StatusMethodNotAllowed), response.StatusCode)
+	}
+}
+
+func Test_Applicant_GetApplicantJobBookmark_Success(t *testing.T) {
+
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(applicants.GetApplicantJobBookmark))
+
+	defer ts.Close()
+
+	applicant := testhelper.Helper_RandomApplicant(t)
+	employer := testhelper.Helper_RandomEmployer(t)
+	job := testhelper.Helper_RandomJob(employer, t)
+
+	data := map[string]string{
+		"jobid": job.PublicID,
+	}
+
+	requestBody, err := json.Marshal(data)
+
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	request, err := http.NewRequest("POST", ts.URL, bytes.NewBuffer(requestBody))
+
+	token, err := jwt.GenerateToken(applicant.PublicID)
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{}
+
+	response, err := httpClient.Do(request)
+
+	assert.Nil(err)
+	assert.NotNil(response)
+}
