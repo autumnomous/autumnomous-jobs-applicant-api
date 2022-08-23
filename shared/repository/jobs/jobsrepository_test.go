@@ -66,3 +66,27 @@ func Test_JobsRepository_GetJobsByZipcode(t *testing.T) {
 	assert.Nil(err)
 	assert.GreaterOrEqual(len(jobs), 3)
 }
+
+func Test_JobsRepository_GetApplicantBookmarkedJobs(t *testing.T) {
+	assert := assert.New(t)
+	applicant := testhelper.Helper_RandomApplicant(t)
+	employer := testhelper.Helper_RandomEmployer(t)
+	company := testhelper.Helper_RandomCompany(t)
+
+	testhelper.Helper_SetEmployerCompany(employer.PublicID, company.PublicID)
+
+	job := testhelper.Helper_RandomJob(employer, t)
+	testhelper.Helper_CreateApplicantJobBookmark(applicant, job, t)
+
+	job = testhelper.Helper_RandomJob(employer, t)
+	testhelper.Helper_CreateApplicantJobBookmark(applicant, job, t)
+
+	job = testhelper.Helper_RandomJob(employer, t)
+	testhelper.Helper_CreateApplicantJobBookmark(applicant, job, t)
+
+	repository := jobs.NewJobRegistry().GetJobRepository()
+	jobs, err := repository.GetApplicantBookmarkedJobs(applicant.PublicID)
+
+	assert.Nil(err)
+	assert.GreaterOrEqual(len(jobs), 3)
+}

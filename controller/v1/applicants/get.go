@@ -230,3 +230,20 @@ func GetApplicantJobBookmark(w http.ResponseWriter, r *http.Request) {
 	return
 
 }
+
+func GetApplicantBookmarkedJobs(w http.ResponseWriter, r *http.Request) {
+
+	publicID := jwt.GetUserClaim(r)
+
+	repository := jobs.NewJobRegistry().GetJobRepository()
+
+	jobs, err := repository.GetApplicantBookmarkedJobs(publicID)
+
+	if err != nil {
+		response.SendJSONMessage(w, http.StatusInternalServerError, response.FriendlyError)
+		return
+	}
+
+	response.SendJSON(w, jobs)
+	return
+}

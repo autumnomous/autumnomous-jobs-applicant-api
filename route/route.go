@@ -43,6 +43,7 @@ func routes() *httprouter.Router {
 	r.POST("/applicant/get/jobs/search/radius", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetJobsByRadius)))
 
 	r.POST("/applicant/get/bookmark", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetApplicantJobBookmark)))
+	r.GET("/applicant/get/bookmark/jobs", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.GetApplicantBookmarkedJobs)))
 	r.POST("/applicant/bookmark", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.BookmarkJob)))
 	r.DELETE("/applicant/bookmark", hr.Handler(alice.New(acl.ValidateJWT).ThenFunc(applicants.BookmarkJob)))
 

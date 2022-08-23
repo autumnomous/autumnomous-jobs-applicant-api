@@ -403,3 +403,34 @@ func Test_Applicant_GetApplicantJobBookmark_Success(t *testing.T) {
 	assert.Nil(err)
 	assert.NotNil(response)
 }
+
+func Test_Applicant_GetApplicantBookmarkedJobs_Success(t *testing.T) {
+	assert := assert.New(t)
+	ts := httptest.NewServer(http.HandlerFunc(applicants.GetApplicantBookmarkedJobs))
+
+	defer ts.Close()
+
+	applicant := testhelper.Helper_RandomApplicant(t)
+	employer := testhelper.Helper_RandomEmployer(t)
+	job := testhelper.Helper_RandomJob(employer, t)
+
+	testhelper.Helper_CreateApplicantJobBookmark(applicant, job, t)
+
+	request, err := http.NewRequest("POST", ts.URL, nil)
+	assert.Nil(err)
+
+	token, err := jwt.GenerateToken(applicant.PublicID)
+	assert.Nil(err)
+
+	token = base64.StdEncoding.EncodeToString([]byte(token))
+	request.Header.Set("Content-Type", "application/json")
+	request.Header.Set("Authorization", "Bearer "+token)
+
+	httpClient := &http.Client{}
+
+	response, err := httpClient.Do(request)
+
+	assert.Nil(err)
+	assert.NotNil(response)
+
+}

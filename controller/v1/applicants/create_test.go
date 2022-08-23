@@ -149,7 +149,12 @@ func Test_Applicant_Create_BookmarkJob_Delete_Success(t *testing.T) {
 
 	applicant := testhelper.Helper_RandomApplicant(t)
 	employer := testhelper.Helper_RandomEmployer(t)
+	company := testhelper.Helper_RandomCompany(t)
+
+	testhelper.Helper_SetEmployerCompany(employer.PublicID, company.PublicID)
 	job := testhelper.Helper_RandomJob(employer, t)
+
+	testhelper.Helper_CreateApplicantJobBookmark(applicant, job, t)
 
 	data := map[string]string{
 		"jobid": job.PublicID,
@@ -161,7 +166,11 @@ func Test_Applicant_Create_BookmarkJob_Delete_Success(t *testing.T) {
 		t.Fatal(err)
 	}
 
-	request := httptest.NewRequest("DELETE", ts.URL, bytes.NewBuffer(requestBody))
+	request, err := http.NewRequest("DELETE", ts.URL, bytes.NewBuffer(requestBody))
+
+	if err != nil {
+		t.Fatal(err)
+	}
 
 	token, err := jwt.GenerateToken(applicant.PublicID)
 
@@ -174,8 +183,7 @@ func Test_Applicant_Create_BookmarkJob_Delete_Success(t *testing.T) {
 	request.Header.Set("Content-Type", "application/json")
 	request.Header.Set("Authorization", "Bearer "+token)
 
-	client := http.Client{}
-
+	client := &http.Client{}
 	response, err := client.Do(request)
 
 	assert.Nil(err)

@@ -89,6 +89,12 @@ type TestEmployer struct {
 	Role             string
 }
 
+type TestJobBookmark struct {
+	PublicID          string `json:"publicid"`
+	ApplicantPublicID string `json:"applicantpublicid"`
+	JobPublicID       string `json:"jobpublicid"`
+}
+
 func Init() {
 	os.Clearenv()
 
@@ -289,6 +295,33 @@ func Helper_SetEmployerCompany(employerPublicID, companyPublicID string) error {
 
 	return nil
 
+}
+
+func Helper_CreateApplicantJobBookmark(applicant *TestApplicant, job *TestJob, t *testing.T) *TestJobBookmark {
+
+	if applicant.PublicID == "" || job.PublicID == "" {
+		return nil
+	}
+
+	var bookmark TestJobBookmark
+	stmt, err := database.DB.Prepare(`INSERT INTO applicantjobbookmarks(applicantpublicid, jobpublicid) VALUES ($1, $2) RETURNING publicid;`)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	err = stmt.QueryRow(applicant.PublicID, job.PublicID).Scan(&bookmark.PublicID)
+
+	if err != nil {
+		log.Println(err)
+		return nil
+	}
+
+	bookmark.ApplicantPublicID = applicant.PublicID
+	bookmark.JobPublicID = job.PublicID
+
+	return &bookmark
 }
 
 // func Helper_CreateJobPackage(pack *TestJobPackage, t *testing.T) *TestJobPackage {
